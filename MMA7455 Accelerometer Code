@@ -1,0 +1,73 @@
+Using MMA7455 Accelerometer (ParallaX)
+https://www.parallax.com/product/28526
+
+#include <Wire.h> // Must include Wire library for I2C
+#include <MMA_7455.h> // Includes the MMA_7455 library
+#include <SPI.h>
+#include <SD.h>
+
+MMA_7455 accel = MMA_7455(); // Default MMA7455 object create
+
+char xAcceleration, yAcceleration, zAcceleration; //Return value variables
+//String dataString; //create string for SD saving edited 4/21
+const int chipSelect = 4; //added 4/21
+
+void setup() {
+  // put your setup code here, to run once:
+ Serial.begin(9600);          /*  setup a serial port to enable comms with the computer.
+                               This is very useful for debugging and or sending values to the console.*/
+ Serial.print("Initializing SD card..."); //added 4/21
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(10, OUTPUT);
+  
+    // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    return;
+  }
+  Serial.println("card initialized."); 
+  
+ accel.initSensitivity(2);
+ accel.calibrateOffset(0, 0, 0);
+} //end setup function
+
+
+//reformatting loop from sparkfun to incorporate SD card reading/printing
+void loop() {
+  String dataString = ""; //added 4/21
+  
+  xAcceleration = accel.readAxis('x');
+  dataString += String(xAcceleration, DEC); 
+  dataString += String(" ");
+  Serial.print("X= ");
+  Serial.print(xAcceleration, DEC);
+  Serial.print(" ");
+  
+  yAcceleration = accel.readAxis('y');
+  dataString += String(yAcceleration, DEC); 
+  dataString += String(" ");
+  Serial.print("Y= ");
+  Serial.print(yAcceleration, DEC);
+  Serial.print(" ");
+  
+  zAcceleration = accel.readAxis('z');
+  dataString += String(zAcceleration, DEC); 
+  Serial.print("Z= ");
+  Serial.println(zAcceleration, DEC);
+
+delay(0.015625);           //wait 0.015625 ==>seconds (64 Hz) and repeat the loop
+
+File dataFile = SD.open("datalog.txt",FILE_WRITE); //qdded 4/21
+  if (dataFile) {
+    dataFile.println(dataString); //edited: DEC added 4/21
+    dataFile.close();
+    //print to the serial port too:
+    Serial.println(dataString);
+  }
+  //if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog.txt");
+  }
+}
