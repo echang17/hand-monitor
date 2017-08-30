@@ -1,0 +1,74 @@
+Using MMA8452Q Accelerometer: https://learn.sparkfun.com/tutorials/mma8452q-accelerometer-breakout-hookup-guide/example-code
+
+-----FINAL CODE------
+#include <Wire.h> // Must include Wire library for I2C
+#include <SFE_MMA8452Q.h> // Includes the SFE_MMA8452Q library
+#include <SPI.h>
+#include <SD.h>
+
+MMA8452Q accel; // Default MMA8452Q object create. (Address = 0x1D) /*create class*/
+
+int xAcceleration; 
+int yAcceleration;
+int zAcceleration;
+String dataString; //added in 4/7
+const int WarningLED = 7; /*defines variable WarningLED to have integer value 7. The value corresponds to a digital Pin number. 7 was chosen for no other reason than it is not being used for any other function. The pin number 13 is connected to the board Arduino green LED. If you want to connect your LED to a different pin change the number to another available digital output. This method of defining the pins makes more readable code plus it is eaiser to change the pin since it is only specified once in the code.*/
+
+
+void setup() {
+  // put your setup code here, to run once:
+accel.init(); // Default init: +/-2g and 800Hz ODR
+
+  
+ pinMode(WarningLED, OUTPUT); //sets the warning LED pin as a digital output
+ Serial.begin(9600);          /*  setup a serial port to enable comms with the computer.
+                               This is very useful for debugging and or sending values to the console.*/
+ Serial.println("Hello world");  //write a line to the console to tell us the code is working
+
+
+ //flash the warning led twice with a 1 second delay to let us know it is working
+ digitalWrite(WarningLED, HIGH);
+ delay(1000);
+ digitalWrite(WarningLED, LOW);
+ delay(1000);
+ digitalWrite(WarningLED, HIGH);
+ delay(1000);
+ digitalWrite(WarningLED, LOW);
+} //end setup function
+
+// open the file. note that only one file can be open at a time,
+// so you have to close this one before opening another.
+File dataFile = SD.open("datalog.txt", FILE_WRITE); 
+
+//reformatting loop from sparkfun to incorporate SD card reading/printing
+void loop() {
+  xAcceleration = accel.x;
+  dataString += String(xAcceleration);
+  Serial.print("Acceleration on the x-axis is ");
+  Serial.println(xAcceleration);
+  
+  yAcceleration = accel.y;
+  dataString += String(yAcceleration);
+  Serial.print("Acceleration on the y-axis is ");
+  Serial.println(yAcceleration);
+  
+  zAcceleration = accel.z;
+  dataString += String(zAcceleration);
+  Serial.print("Acceleration on the z-axis is ");
+  Serial.println(zAcceleration);
+
+delay(15.625);                             //wait 0.015625 seconds (64 Hz) and repeat the loop
+//}  //end of loop function
+
+// if the file is available, write to it:
+if (dataFile) {
+  dataFile.println(dataString);
+  dataFile.close();
+  // print to the serial port too:
+  Serial.println(dataString);
+}
+// if the file isn't open, pop up an error:
+else {
+  Serial.println("error opening datalog.txt");
+  }
+}
